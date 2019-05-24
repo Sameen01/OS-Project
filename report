@@ -1,0 +1,909 @@
+
+
+
+OPERATING SYSTEMS
+
+Sorting Algorithms using P-Threads and OpenMP
+  
+SEMESTER PROJECT REPORT
+
+
+
+Submitted to: Ms. Nausheen Shoaib
+
+
+
+MEMBERS:
+Sineha Aneel (17k-3897)
+Marium Shah (17k-3938)
+Sameen Jawaid(17k-3868)
+
+
+
+
+PROJECT NAME:
+
+Parallel Programming - Comparison of sorting Algorithms using Pthreads vs. OpenMP (3 algorithms)
+
+
+
+FUNCTIONALITIES OF PROJECT:
+
+We have implemented 3 different sorting algorithms; Quick Sort, Merge Sort and Heap Sort. 
+Each algorithm has been implemented using three approaches; Pthreads, OpenMP and normal sequential C programming on Ubuntu and are later, compared.
+
+
+
+
+SOFTWARE USED:
+VMWare-Ubuntu
+
+
+CONCLUSION:
+After implementing the sorting algorithms with p-threads and openmp, we have reached to the following conclusions
+Quick and Merge Sort, openmp is the most efficient, while serial proved to be the worst. Pthread lies between both. 
+On the other hand, with Heap Sort, serial seems to be the most efficient while pthreads proved to be the worst. 
+
+
+
+
+
+QUICK SORT
+
+Quicksort (sometimes called partition-exchange sort) is an efficient sorting algorithm, serving as a systematic method for placing the elements of an array in order. When implemented well, it can be about two or three times faster than its main competitors, merge sort and heapsort. It is a fast sorting algorithm that takes a divide-and-conquer approach to sorting lists. While sorting is a simple concept, it is a basic principle used in complex programs such as file search, data compression, and pathfinding. Running time is an important thing to consider when selecting a sorting algorithm since efficiency is often thought of in terms of speed. Quicksort has a very slow worst-case running time, but a fast average and best-case running time. 
+
+The graph below shows the difference in the running times of quick sort when implemented serially and when with p-threads and open-mp.
+
+
+
+CODES:
+
+Serial
+#include<iostream> 
+#include<time.h>
+#include<stdlib.h>
+#define n 20
+using namespace std;
+
+double RunTime=0;
+void swap(int* a, int* b) 
+{ 
+    clock_t start,stop;
+    start=clock();
+    int t = *a; 
+    *a = *b; 
+    *b = t; 
+stop=clock();
+   
+    RunTime=RunTime+((stop-start)/(double)CLOCKS_PER_SEC);
+	//cout<<RunTime<<"swap"<<endl;
+} 
+
+int partition (int arr[], int low, int high) 
+{ 
+    clock_t start,stop;
+    start=clock();
+    int pivot = arr[high];   
+    int i = (low - 1); 
+   for (int j = low; j <= high- 1; j++) 
+    { 
+        if (arr[j] <= pivot) 
+        { 
+            i++; 
+            swap(&arr[i], &arr[j]); 
+        } 
+    } 
+    swap(&arr[i + 1], &arr[high]); 
+    stop=clock();
+    RunTime=RunTime+((stop-start)/(double)CLOCKS_PER_SEC);
+    return (i + 1); 
+
+} 
+void quickSort(int arr[], int low, int high) 
+{ 
+ clock_t start, stop;
+    start=clock();
+    if (low < high) 
+    { 
+        int pi = partition(arr, low, high); 
+        quickSort(arr, low, pi - 1); 
+        quickSort(arr, pi + 1, high); 
+    } 
+stop=clock();
+   
+    RunTime=RunTime+((stop-start)/(double)CLOCKS_PER_SEC);
+} 
+int main() 
+{ 
+srand(time(NULL));
+    int arr[n]; 
+for(int i=0;i<n;i++)
+arr[i]=rand()%100;
+    quickSort(arr, 0, n-1); 
+    cout<<"SORTED ARRAY";
+for(int i=0;i<n;i++)
+cout<<" "<<arr[i]<<" ";
+cout<<"runtime: "<<RunTime<<endl;
+    return 0; 
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+P-Threads
+#include<iostream> 
+#include<time.h>
+#include<pthread.h>
+#include<stdlib.h>
+#define MAX 20
+#define THREAD_MAX 4
+using namespace std;
+int part=0;
+int a[MAX];
+double RunTime=0;
+void swap(int* a, int* b) 
+{ 
+    clock_t start,stop;
+    start=clock();
+    int t = *a; 
+    *a = *b; 
+    *b = t; 
+stop=clock();
+   
+    RunTime=RunTime+((stop-start)/(double)CLOCKS_PER_SEC);
+	//cout<<RunTime<<"swap"<<endl;
+} 
+
+int partition ( int low, int high) 
+{ 
+    clock_t start,stop;
+    start=clock();
+    int pivot = a[high];   
+    int i = (low - 1); 
+   for (int j = low; j <= high- 1; j++) 
+    { 
+        if (a[j] <= pivot) 
+        { 
+            i++; 
+            swap(&a[i], &a[j]); 
+        } 
+    } 
+    swap(&a[i + 1], &a[high]); 
+    stop=clock();
+    RunTime=RunTime+((stop-start)/(double)CLOCKS_PER_SEC);
+    return (i + 1); 
+
+} 
+void quickSort( int low, int high) 
+{ 
+ clock_t start, stop;
+    start=clock();
+    if (low < high) 
+    { 
+        int pi = partition( low, high); 
+        quickSort( low, pi - 1); 
+        quickSort( pi + 1, high); 
+    } 
+stop=clock();
+   
+    RunTime=RunTime+((stop-start)/(double)CLOCKS_PER_SEC);
+} 
+
+void* quickSort(void* arg) 
+{ 
+ clock_t start, stop;
+    start=clock();
+int thread_part=part++;
+int low=(thread_part)*(MAX/4);
+int high=(thread_part+1)*(MAX/4)-1;
+    if (low < high) 
+    { 
+        int pi = partition( low, high); 
+        quickSort( low, pi - 1); 
+        quickSort( pi + 1, high); 
+    } 
+stop=clock();
+   
+    RunTime=RunTime+((stop-start)/(double)CLOCKS_PER_SEC);
+} 
+int main() 
+{ 
+srand(time(NULL));
+for(int i=0;i<MAX;i++)
+a[i]=rand()%100;
+pthread_t t1;
+for (int i=0;i<4;i++)
+pthread_create(&t1,NULL,quickSort,(void*)NULL);
+for (int i=0;i<4;i++)
+pthread_join(t1,NULL);
+   quickSort( 0, MAX-1); 
+    cout<<"SORTED ARRAY";
+    for(int i=0;i<MAX;i++)
+cout<<" "<<a[i]<<" ";
+cout<<"runtime: "<<RunTime<<endl;
+    return 0; 
+}
+
+OpenMp
+#include<iostream>
+#include<omp.h>
+#include<stdlib.h>
+#include<time.h>
+using namespace std;
+#define n 20
+int arr[n];
+double RunTime=0;
+int partition(int arr[], int low_index, int high_index)
+{
+ clock_t start, stop;
+    start=clock();
+int i, j, temp, key;
+key = arr[low_index];
+i= low_index + 1;
+j= high_index;
+while(1)
+{
+while(i < high_index && key >= arr[i])
+    i++;
+while(key < arr[j])
+    j--;
+if(i < j)
+{
+temp = arr[i];
+arr[i] = arr[j];
+arr[j] = temp;
+}
+else
+{
+temp= arr[low_index];
+arr[low_index] = arr[j];
+arr[j]= temp;
+return(j);
+}
+}
+stop=clock();
+   
+    RunTime=RunTime+((stop-start)/(double)CLOCKS_PER_SEC);
+}
+void quicksort(int arr[], int low_index, int high_index)
+{
+ clock_t start, stop;
+    start=clock();
+int j;
+int k=0;
+if(low_index < high_index)
+{
+j = partition(arr, low_index, high_index);
+#pragma omp parallel sections
+{
+    #pragma omp section
+    {
+        k=k+1;
+        quicksort(arr, low_index, j - 1);
+    }
+    #pragma omp section
+    {
+        k=k+1;
+        quicksort(arr, j + 1, high_index);
+    }
+
+}
+}
+stop=clock();
+   
+    RunTime=RunTime+((stop-start)/(double)CLOCKS_PER_SEC);
+}
+int main()
+{
+srand(time(NULL));
+for(int i=0;i<n;i++)
+arr[i]=rand()%1000;
+cout<<"Elements of array before sorting \n";
+cout<<endl;
+for(int i=0;i<n;i++)
+{
+cout<<" "<<arr[i]<<" ";
+}
+quicksort(arr, 0, n - 1);
+cout<<"Elements of array after sorting \n";
+for(int i=0;i<n;i++)
+{
+cout<<" "<<arr[i]<<" ";
+}
+cout<<endl;
+cout<<"RunTime: "<<RunTime<<endl;
+return 0;}
+
+HEAP SORT
+
+Heapsort is a comparison-based sorting algorithm. Heapsort can be thought of as an improved selection sort: like that algorithm, it divides its input into a sorted and an unsorted region, and it iteratively shrinks the unsorted region by extracting the largest element and moving that to the sorted region. 
+It is a comparison based sorting technique based on Binary Heap data structure. It is similar to selection sort where we first find the maximum element and place the maximum element at the end. We repeat the same process for remaining element. 
+The graph below shows the difference in the running times of quick sort when implemented serially and when with p-threads and open-mp.
+
+
+
+	
+
+
+
+
+
+CODES:
+
+Serial
+#include <iostream>
+#include <time.h>
+#include<stdlib.h>
+using namespace std;
+#define MAX 20
+
+double RunTime=0;
+int arr[MAX];
+
+// To heapify a subtree rooted with node i which is
+// an index in arr[]. n is size of heap
+void heapify(int n, int i)
+{
+ clock_t t1, t2;
+ t1=clock();
+ 
+    int largest = i; // Initialize largest as root
+    int l = 2*i + 1; // left = 2*i + 1
+    int r = 2*i + 2; // right = 2*i + 2
+ 
+    // If left child is larger than root
+    if (l < n && arr[l] > arr[largest])
+        largest = l;
+ 
+    // If right child is larger than largest so far
+    if (r < n && arr[r] > arr[largest])
+        largest = r;
+ 
+    // If largest is not root
+    if (largest != i)
+    {
+        swap(arr[i], arr[largest]);
+ 
+        // Recursively heapify the affected sub-tree
+        heapify(n, largest);
+    }
+ 
+ t2=clock();
+ 
+ RunTime=RunTime+((t2-t1)/(double)CLOCKS_PER_SEC);
+}
+ 
+// main function to do heap sort
+void heapSort(int n)
+{
+ clock_t start,stop;
+ start=clock();
+    // Build heap (rearrange array)
+    for (int i = n / 2 - 1; i >= 0; i--)
+        heapify(n, i); 
+ 
+    // One by one extract an element from heap
+    for (int i=n-1; i>=0; i--)
+    {
+        // Move current root to end
+        swap(arr[0], arr[i]);
+ 
+        // call max heapify on the reduced heap
+        heapify(i, 0);
+    }
+   
+ stop=clock();
+ RunTime=RunTime+((stop-start)/(double)CLOCKS_PER_SEC);
+}
+ 
+void printArray()
+{
+    for (int i=0; i<MAX; ++i)
+        cout << arr[i] << " ";
+    cout << "\n";
+}
+ 
+int main()
+{
+Srand(time(NULL));
+for (int i=0;i<MAX;i++)
+ {
+  arr[i]=rand()%1000;
+ }
+ printArray();
+ heapSort(MAX);
+    cout << "Sorted array is \n";
+    printArray();
+   
+ cout<<"runtime: "<<RunTime<<endl;
+ return(0);}
+P-Threads
+#include <iostream>
+#include <time.h>
+#include <pthread.h>
+#include<stdlib.h>
+using namespace std;
+#define MAX 20
+double RunTime=0;
+int arr[MAX];
+ 
+// To heapify a subtree rooted with node i which is
+// an index in arr[]. n is size of heap
+void heapify(int n, int i)
+{
+    clock_t t1, t2;
+    t1=clock();
+              
+    int largest = i; // Initialize largest as root
+    int l = 2*i + 1; // left = 2*i + 1
+    int r = 2*i + 2; // right = 2*i + 2
+ 
+    // If left child is larger than root
+    if (l < n && arr[l] > arr[largest])
+        largest = l;
+ 
+    // If right child is larger than largest so far
+    if (r < n && arr[r] > arr[largest])
+        largest = r;
+ 
+    // If largest is not root
+    if (largest != i)
+    {
+        swap(arr[i], arr[largest]);
+        // Recursively heapify the affected sub-tree
+        heapify(n,largest);
+    }
+                t2=clock();
+                RunTime=RunTime+((t2-t1)/(double)CLOCKS_PER_SEC);
+
+}
+// main function to do heap sort
+void* heapSort(void* arg)
+{
+    int n=MAX;
+                clock_t start,stop;
+                start=clock();
+    // Build heap (rearrange array)
+    for (int i = n / 2 - 1; i >= 0; i--)
+    {
+        heapify(n,i);
+    }
+ 
+    // One by one extract an element from heap
+    for (int i=n-1; i>=0; i--)
+    {
+        // Move current root to end
+        swap(arr[0], arr[i]);
+        // call max heapify on the reduced heap
+        heapify(i,0);
+    } 
+                stop=clock();
+                RunTime=RunTime+((stop-start)/(double)CLOCKS_PER_SEC);
+}
+ 
+ 
+void* printArray(void* arg)
+{
+    cout<<"The SORTED Array is: "<<endl;
+    for (int i=0; i<MAX; ++i)
+        cout << arr[i] << " ";
+cout<<endl;
+}
+ 
+ 
+int main()
+{
+ srand(time(NULL));
+    pthread_t t1,t2;
+ for (int i=0;i<MAX;i++)
+ {
+  arr[i]=rand()%1000;
+ }
+ 
+    pthread_create(&t1,NULL,heapSort,(void*)NULL);
+    pthread_join(t1,NULL);
+    pthread_create(&t2,NULL,printArray,(void*)NULL);
+    pthread_join(t2,NULL);
+    cout<<"runtime: "<<RunTime<<endl;
+    return(0);}
+Open-MP
+
+#include <iostream>
+#include <time.h>
+#include<stdlib.h>
+using namespace std;
+#define MAX 20
+double RunTime=0;
+int arr[MAX];
+
+// To heapify a subtree rooted with node i which is
+// an index in arr[]. n is size of heap
+void heapify(int n, int i)
+{
+ clock_t t1, t2;
+ t1=clock();
+ 
+    int largest = i; // Initialize largest as root
+    int l = 2*i + 1; // left = 2*i + 1
+    int r = 2*i + 2; // right = 2*i + 2
+ 
+    // If left child is larger than root
+    if (l < n && arr[l] > arr[largest])
+        largest = l;
+ 
+    // If right child is larger than largest so far
+    if (r < n && arr[r] > arr[largest])
+        largest = r;
+ 
+    // If largest is not root
+    if (largest != i)
+    {
+        swap(arr[i], arr[largest]);
+ 
+        // Recursively heapify the affected sub-tree
+        heapify(n, largest);
+    }
+ 
+ t2=clock();
+ 
+ RunTime=RunTime+((t2-t1)/(double)CLOCKS_PER_SEC);
+}
+ 
+// main function to do heap sort
+void heapSort(int n)
+{
+int k=0;
+ clock_t start,stop;
+ start=clock();
+    // Build heap (rearrange array)
+
+#pragma omp parallel sections
+{
+    #pragma omp section
+    {
+	k-k+1;
+    	for (int i = n / 2 - 1; i >= 0; i--)
+        heapify(n, i); 
+    }
+    #pragma omp section
+    k=k+1;
+    {
+    for (int i=n-1; i>=0; i--)
+    {
+        // Move current root to end
+        swap(arr[0], arr[i]);
+ 
+        // call max heapify on the reduced heap
+        heapify(i, 0);
+    }
+   }}
+ stop=clock();
+ RunTime=RunTime+((stop-start)/(double)CLOCKS_PER_SEC);
+}
+ 
+void printArray()
+{
+    for (int i=0; i<MAX; ++i)
+        cout << arr[i] << " ";
+    cout << "\n";
+}
+ 
+int main()
+{
+Srand(time(NULL));
+for (int i=0;i<MAX;i++)
+ {
+  arr[i]=rand()%1000;
+ }
+heapSort(MAX);
+   
+ cout<<"runtime: "<<RunTime<<endl;
+ return(0);
+}
+
+	
+	
+
+MERGE SORT
+
+Like Quick Sort, Merge Sort is a Divide and Conquer algorithm. It divides input array in two halves, calls itself for the two halves and then merges the two sorted halves. The merge() function is used for merging two halves.
+The graph below shows the difference in the running times of quick sort when implemented serially and when with p-threads and open-mp.
+
+
+	
+	
+	
+
+CODES:
+
+Serial
+#include <iostream> 
+#include <time.h> 
+#include <stdlib.h>
+#define MAX 1000
+
+using namespace std; 
+
+int a[MAX]; 
+int rand();
+int part = 0; 
+double Runtime=0;
+
+void merge(int low, int mid, int high) 
+{ 
+    int* left = new int[mid - low + 1]; 
+    int* right = new int[high - mid]; 
+
+    int n1 = mid - low + 1, n2 = high - mid, i, j; 
+
+    for (i = 0; i < n1; i++) 
+        left[i] = a[i + low]; 
+
+    for (i = 0; i < n2; i++) 
+        right[i] = a[i + mid + 1]; 
+
+    int k = low; 
+    i = j = 0; 
+
+    while (i < n1 && j < n2) { 
+        if (left[i] <= right[j]) 
+            a[k++] = left[i++]; 
+        else
+            a[k++] = right[j++]; 
+    } 
+
+    while (i < n1) { 
+        a[k++] = left[i++]; 
+    } 
+
+    while (j < n2) { 
+        a[k++] = right[j++]; 
+    } 
+} 
+
+void merge_sort(int low, int high) 
+{ 
+    int mid = low + (high - low) / 2; 
+    if (low < high) { 
+
+        merge_sort(low, mid); 
+
+        merge_sort(mid + 1, high); 
+
+        merge(low, mid, high); 
+    } 
+} 
+
+int main() 
+{ 
+    for (int i = 0; i < MAX; i++){
+    a[i]=rand();
+  }
+
+    clock_t t1, t2; 
+
+    t1 = clock(); 
+    merge_sort(0, MAX-1);
+    t2 = clock(); 
+
+    cout << "Sorted array: "; 
+    for (int i = 0; i < MAX; i++) 
+        cout << a[i] <<endl; 
+    Runtime= (t2 - t1) / (double)CLOCKS_PER_SEC;
+    cout <<endl<< "Time taken: " << Runtime << endl; 
+
+    return 0; 
+}
+
+P-Threads
+
+#include <iostream> 
+#include <pthread.h> 
+#include <time.h> 
+#include <stdlib.h>
+#define MAX 1000
+#define THREAD_MAX 4 
+
+using namespace std; 
+
+int a[MAX]; 
+int rand();
+int part = 0; 
+
+void merge(int low, int mid, int high) 
+{ 
+    int* left = new int[mid - low + 1]; 
+    int* right = new int[high - mid]; 
+
+    int n1 = mid - low + 1, n2 = high - mid, i, j; 
+
+    for (i = 0; i < n1; i++) 
+        left[i] = a[i + low]; 
+
+    for (i = 0; i < n2; i++) 
+        right[i] = a[i + mid + 1]; 
+
+    int k = low; 
+    i = j = 0; 
+
+    while (i < n1 && j < n2) { 
+        if (left[i] <= right[j]) 
+            a[k++] = left[i++]; 
+        else
+            a[k++] = right[j++]; 
+    } 
+
+    while (i < n1) { 
+        a[k++] = left[i++]; 
+    } 
+
+    while (j < n2) { 
+        a[k++] = right[j++]; 
+    } 
+} 
+
+void merge_sort(int low, int high) 
+{ 
+    int mid = low + (high - low) / 2; 
+    if (low < high) { 
+
+        merge_sort(low, mid); 
+
+        merge_sort(mid + 1, high); 
+
+        merge(low, mid, high); 
+    } 
+} 
+
+void* merge_sort(void* arg) 
+{ 
+    int thread_part = part++; 
+
+    int low = thread_part * (MAX / 4); 
+    int high = (thread_part + 1) * (MAX / 4) - 1; 
+
+    int mid = low + (high - low) / 2; 
+    if (low < high) { 
+        merge_sort(low, mid); 
+        merge_sort(mid + 1, high); 
+        merge(low, mid, high); 
+    } 
+} 
+
+int main() 
+{ 
+    for (int i = 0; i < MAX; i++){
+    //cout<<"Enter number: ";
+    //cin>>a[i];
+    a[i]=rand();
+  }
+
+    clock_t t1, t2; 
+
+    t1 = clock(); 
+    pthread_t threads[THREAD_MAX]; 
+
+    for (int i = 0; i < THREAD_MAX; i++) 
+        pthread_create(&threads[i], NULL, merge_sort,(void*)NULL); 
+
+    for (int i = 0; i < 4; i++) 
+        pthread_join(threads[i], NULL); 
+
+    merge(0, (MAX / 2 - 1) / 2, MAX / 2 - 1); 
+    merge(MAX / 2, MAX/2 + (MAX-1-MAX/2)/2, MAX - 1); 
+    merge(0, (MAX - 1)/2, MAX - 1); 
+
+    t2 = clock(); 
+
+    cout << "Sorted array: "; 
+    for (int i = 0; i < MAX; i++) 
+        cout << a[i] <<endl; 
+
+    cout <<endl<< "Time taken: " << (t2 - t1) / 
+            (double)CLOCKS_PER_SEC << endl; 
+
+    return 0; 
+}
+
+
+OpenMP
+
+#include <iostream> 
+#include "omp.h" 
+#include <time.h> 
+#include <stdlib.h>
+#define MAX 1000
+
+using namespace std; 
+int a[MAX]; 
+int rand();
+
+
+void merge(int low, int mid, int high) 
+{ 
+    int* left = new int[mid - low + 1]; 
+    int* right = new int[high - mid]; 
+
+    int n1 = mid - low + 1, n2 = high - mid, i, j; 
+
+
+    for (i = 0; i < n1; i++) 
+        left[i] = a[i + low]; 
+
+
+
+    for (i = 0; i < n2; i++) 
+        right[i] = a[i + mid + 1]; 
+
+    int k = low; 
+    i = j = 0; 
+
+    while (i < n1 && j < n2) { 
+        if (left[i] <= right[j]) 
+            a[k++] = left[i++]; 
+        else
+            a[k++] = right[j++]; 
+    } 
+
+    while (i < n1) { 
+        a[k++] = left[i++]; 
+    } 
+    while (j < n2) { 
+        a[k++] = right[j++]; 
+    } 
+} 
+
+void merge_sort(int low, int high) 
+{ 
+    int mid = low + (high - low) / 2; 
+    if (low < high) { 
+
+    #pragma omp task firstprivate (low, high)
+        merge_sort(low, mid);
+        
+    #pragma omp task firstprivate (low, high)
+        merge_sort(mid + 1, high); 
+        
+    #pragma omp taskwait
+        merge(low, mid, high); 
+    } 
+} 
+int main() 
+{ 
+    for (int i = 0; i < MAX; i++){
+    a[i]=rand();
+  }
+    double t1, t2; 
+
+    t1 = omp_get_wtime();
+
+    #pragma omp parallel
+{
+     #pragma omp single
+    merge_sort(0, MAX-1);
+}
+    t2 = omp_get_wtime(); 
+
+    cout << "Sorted array: "; 
+    for (int i = 0; i < MAX; i++) 
+        cout << a[i] <<endl; 
+
+    cout <<endl<< "Time taken: " << (t2 - t1) / 
+            (double)CLOCKS_PER_SEC << endl; 
+    return 0; 
+}
+
+
